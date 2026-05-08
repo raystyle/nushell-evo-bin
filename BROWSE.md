@@ -254,9 +254,13 @@ browse https://example.com --eval "window.appState"
 browse https://example.com --i-eval "document.querySelectorAll('a').length"
 ```
 
-### `--hook <path>`
+### `--hook <path_or_js>`
 
-在页面脚本执行前注入 JS 文件（全局 hook）。通过 CDP `addScriptToEvaluateOnNewDocument` 注册，每次页面加载/导航都会执行。脚本原样注入，不包装、不捕获返回值。
+在页面脚本执行前注入 JS（全局 hook）。通过 CDP `addScriptToEvaluateOnNewDocument` 注册，每次页面加载/导航都会执行。脚本原样注入，不包装、不捕获返回值。
+
+支持两种输入方式：
+- **文件路径**：传入 `.js` 文件路径，插件读取文件内容注入
+- **内联 JS 文本**：直接传入 JS 代码字符串（当路径不存在时自动识别为内联代码）
 
 - `message.pre.errors`：运行时错误和语法错误（通过 `Runtime.exceptionThrown` 捕获）
 - 错误不影响主流程（`status` 仍为 `"open"`/`"success"`）
@@ -265,8 +269,11 @@ browse https://example.com --i-eval "document.querySelectorAll('a').length"
 - **无 `--ntrace` 时**：`window.__ntraceDone` 仍然可用，可替代固定等待（等待上限为 `--wait` 或 5s）
 
 ```nu
-# hook.js: window.__NU_TEST = 'injected';
+# 文件路径：hook.js 内容为 window.__NU_TEST = 'injected';
 browse https://example.com --hook ./hook.js --eval "window.__NU_TEST"
+
+# 内联 JS：直接传入代码
+browse https://example.com --hook "window.__NU_TEST = 'injected';" --eval "window.__NU_TEST"
 
 # hook + ntrace 提前终止：hook 检测到关键内容后通知插件停止等待
 # scanner.js: if (document.querySelector('.data-loaded')) window.__ntraceDone({reason: 'data_ready'});
