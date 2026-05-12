@@ -145,87 +145,13 @@ cat nu_evo.jsonl | from json --objects | group-by status | values | each { { sta
 
 nushell-evo 与上游 [Nushell](https://github.com/nushell/nushell) 的区别：
 
-- **MCP 命令执行日志**（`NU_MCP_LOG`）— 记录 AI 模型通过 MCP 执行的每条命令
-- **内置 `browse` 插件**（[nu_plugin_browse](crates/nu_plugin_browse/README.md)）— headless 浏览器插件，支持 JS 执行、网络追踪、持久会话
+- **MCP 命令执行日志**（`NU_MCP_LOG`）— 记录 AI 模型通过 MCP 执行的每条命令，支持自我进化
 
 #### MCP 日志
 
 - MCP 工具名：`evaluate`（参数 `input`），`list_commands`，`command_help`
 - 日志仅在 MCP 模式下生效，普通 REPL 不受影响
 - 与 Nushell 内置的 `--log-level` 诊断日志是独立系统，互不重叠
-
-#### browse 插件
-
-Headless 浏览器插件，需要系统安装 Chrome 或 Chromium。
-
-```nu
-# 一次性获取页面 HTML（临时浏览器，自动关闭）
-browse https://example.com
-
-# 执行 JS（隔离世界，stealth 安全）
-browse https://example.com --i-eval "document.title"
-
-# 执行 JS（主世界，可访问页面全局变量）
-browse https://example.com --eval "window.appState"
-
-# 网络追踪（完整 headers + response body，自动等待网络空闲）
-browse https://example.com --ntrace '.*'
-
-# 持久浏览器（跨调用复用 cookie/localStorage）
-browse open https://example.com                  # 默认无头
-browse open https://grok.com --session grok      # 命名 session
-browse open https://example.com --with-head      # 显示窗口
-
-# 在已有 session 导航（不重启浏览器）
-browse goto https://example.com
-browse goto https://grok.com/chat --session grok
-
-# 在持久浏览器执行 JS
-browse open --i-eval "document.title" -s grok
-
-# hook 注入（页面加载前执行 JS，可提前结束等待）
-browse https://example.com --hook ./hook.js --ntrace '.*'
-
-# 查询状态
-browse status              # 默认 session
-browse status grok         # 命名 session
-browse state               # 列出所有 session
-
-# 关闭
-browse close               # 默认 session
-browse close grok          # 命名 session
-browse close --all         # 关闭所有
-```
-
-**命令总览：**
-
-| 命令 | 说明 |
-|------|------|
-| `browse <url>` | 临时浏览器，获取页面后自动关闭 |
-| `browse open [url]` | 打开/连接持久浏览器 |
-| `browse goto <url>` | 已有 session 导航到新 URL |
-| `browse status [session]` | 查询状态（不启动浏览器） |
-| `browse state` | 列出所有 session 及状态 |
-| `browse close [session]` | 关闭（`--all` 关闭全部） |
-
-**JS 执行模式：**
-
-| 参数 | 执行世界 | Stealth |
-|------|---------|---------|
-| `--i-eval` | 隔离世界（不污染页面） | 安全 |
-| `--eval` | 主世界（可访问页面变量） | 不安全 |
-| `--hook` | 主世界（页面加载前注入） | 安全 |
-
-**页面等待机制：** `idle_reason` 字段始终输出，表示等待结束原因：
-
-| 参数组合 | `idle_reason.type` |
-|----------|-------------------|
-| 仅 `--ntrace` | `"normal"` / `"timeout"` |
-| `--ntrace` + `--hook` | `"normal"` / `"timeout"` / `"binding"` |
-| 仅 `--hook` | `"binding"` / `"skipped"` |
-| 仅 `--wait` 或无参数 | `"skipped"` |
-
-完整文档见 [BROWSE.md](BROWSE.md)。
 
 ## License
 
